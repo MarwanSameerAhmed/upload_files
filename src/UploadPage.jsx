@@ -1,11 +1,12 @@
 import React, { useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { UploadCloud, CheckCircle, AlertCircle, File, Loader2 } from 'lucide-react';
 import { supabase, supabaseUrl, supabaseAnonKey } from './supabaseClient';
 
 export default function UploadPage() {
   const [formData, setFormData] = useState({
-    studentName: '',
-    studentId: '',
+    studentName: localStorage.getItem('student_name') || '',
+    studentId: localStorage.getItem('student_id') || '',
     groupName: '',
     assignmentName: ''
   });
@@ -125,9 +126,13 @@ export default function UploadPage() {
         throw new Error('فشل حفظ البيانات: ' + dbError.message);
       }
 
+      // حفظ الرقم الأكاديمي واسم الطالب لتسهيل المرات القادمة وعرض التكاليف
+      if (formData.studentId) localStorage.setItem('student_id', formData.studentId.trim());
+      if (formData.studentName) localStorage.setItem('student_name', formData.studentName.trim());
+
       setUploadStatus('success');
       setStatusMessage('تم رفع التكليف بنجاح وبسرعة فائقة!');
-      setFormData({ studentName: '', studentId: '', groupName: '', assignmentName: '' });
+      setFormData(prev => ({ ...prev, assignmentName: '' }));
       setFile(null);
       
     } catch (error) {
@@ -288,9 +293,25 @@ export default function UploadPage() {
           </button>
 
           {uploadStatus && (
-            <div className={`status-msg ${uploadStatus === 'success' ? 'status-success' : 'status-error'}`}>
-              {uploadStatus === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
-              {statusMessage}
+            <div className={`status-msg ${uploadStatus === 'success' ? 'status-success' : 'status-error'}`} style={{ flexDirection: 'column', gap: '8px', textAlign: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                {uploadStatus === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+                <span>{statusMessage}</span>
+              </div>
+              {uploadStatus === 'success' && (
+                <Link
+                  to="/my-assignments"
+                  style={{
+                    color: 'var(--primary-color)',
+                    fontWeight: '700',
+                    fontSize: '14px',
+                    textDecoration: 'underline',
+                    marginTop: '4px'
+                  }}
+                >
+                  استعراض جميع تكاليفك المسلّمة ومستوى إنجازك ←
+                </Link>
+              )}
             </div>
           )}
         </form>
