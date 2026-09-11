@@ -63,7 +63,7 @@ export default function Dashboard() {
   const [saveSuccessMap, setSaveSuccessMap] = useState({});
 
   // كلمة مرور لوحة التحكم
-  const ADMIN_PASSWORD = '123';
+  const ADMIN_PASSWORD = '778836';
 
   // تحميل الدرجات المحفوظة محلياً
   useEffect(() => {
@@ -328,7 +328,7 @@ export default function Dashboard() {
       const matchAssignment = filterRawAssignment ? item.assignmentName === filterRawAssignment : true;
       const matchName = rawSearchName
         ? item.studentName.toLowerCase().includes(rawSearchName.toLowerCase()) ||
-          item.studentId.includes(rawSearchName)
+        item.studentId.includes(rawSearchName)
         : true;
       return matchGroup && matchAssignment && matchName;
     });
@@ -629,8 +629,8 @@ export default function Dashboard() {
                               st.submittedCount === TOTAL_ASSIGNMENTS_COUNT
                                 ? 'badge-success'
                                 : st.submittedCount > 0
-                                ? 'badge-pending'
-                                : 'badge-missing'
+                                  ? 'badge-pending'
+                                  : 'badge-missing'
                             }
                           >
                             {st.submittedCount === TOTAL_ASSIGNMENTS_COUNT && <CheckCircle2 size={13} />}
