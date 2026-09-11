@@ -58,23 +58,41 @@ export default function StudentAssignments() {
 
       if (error) throw error;
 
-      const formatted = (data || []).map(item => ({
-        id: item.id,
-        timestamp: new Date(item.created_at).toLocaleString('ar-EG', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        }),
-        rawDate: new Date(item.created_at),
-        studentName: item.student_name,
-        studentId: item.student_id,
-        groupName: item.group_name,
-        assignmentName: item.assignment_name,
-        fileName: item.file_name,
-        fileUrl: item.file_url
-      }));
+      let localGrades = {};
+      try {
+        localGrades = JSON.parse(localStorage.getItem('flutter_bootcamp_teacher_grades_v1') || '{}');
+      } catch (e) {
+        console.error('Error reading local grades:', e);
+      }
+
+      const formatted = (data || []).map(item => {
+        const localKey = `${item.student_id}_${item.assignment_name}`;
+        const localGradeData = localGrades[localKey];
+        const grade = item.grade !== undefined && item.grade !== null && item.grade !== '' 
+          ? String(item.grade) 
+          : (localGradeData?.grade || '');
+        const notes = item.notes || (localGradeData?.notes || '');
+
+        return {
+          id: item.id,
+          timestamp: new Date(item.created_at).toLocaleString('ar-EG', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          }),
+          rawDate: new Date(item.created_at),
+          studentName: item.student_name,
+          studentId: item.student_id,
+          groupName: item.group_name,
+          assignmentName: item.assignment_name,
+          fileName: item.file_name,
+          fileUrl: item.file_url,
+          grade,
+          notes
+        };
+      });
 
       setAssignments(formatted);
 
@@ -104,6 +122,13 @@ export default function StudentAssignments() {
   const completedCount = uniqueSubmittedAssignments.length;
   const totalExpected = 12;
   const progressPercent = Math.min(100, Math.round((completedCount / totalExpected) * 100));
+
+  // حساب إجمالي الدرجات المرصودة
+  const totalGradedPoints = assignments.reduce((sum, item) => {
+    const g = Number(item.grade);
+    return !isNaN(g) && item.grade !== '' ? sum + g : sum;
+  }, 0);
+  const gradedAssignmentsCount = assignments.filter(item => item.grade !== '' && !isNaN(Number(item.grade))).length;
 
   // تطبيق الفلترة والترتيب
   const filteredAssignments = assignments
@@ -231,6 +256,13 @@ export default function StudentAssignments() {
                         {completedCount} من {totalExpected} تكليف ({progressPercent}%)
                       </div>
                     </div>
+
+                    <div>
+                      <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '2px' }}>إجمالي الدرجات</div>
+                      <div style={{ fontSize: '16px', fontWeight: '700', color: gradedAssignmentsCount > 0 ? 'var(--primary-color)' : 'var(--text-secondary)' }}>
+                        {gradedAssignmentsCount > 0 ? `${totalGradedPoints} درجة` : 'قيد التقييم'}
+                      </div>
+                    </div>
                   </div>
 
                   {/* شريط التقدم */}
@@ -299,6 +331,7 @@ export default function StudentAssignments() {
                           <th>تاريخ التسليم</th>
                           <th>اسم الملف المرفوع</th>
                           <th>الحالة</th>
+                          <th>الدرجة المرصودة</th>
                           <th>الملف</th>
                         </tr>
                       </thead>
@@ -325,6 +358,24 @@ export default function StudentAssignments() {
                                 <CheckCircle2 size={13} />
                                 مسلّم بنجاح
                               </span>
+                            </td>
+                            <td>
+                              {row.grade ? (
+                                <div>
+                                  <span style={{ fontWeight: '700', color: 'var(--success-color)' }}>
+                                    {row.grade} درجة
+                                  </span>
+                                  {row.notes && (
+                                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                                      {row.notes}
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                  بانتظار التقييم
+                                </span>
+                              )}
                             </td>
                             <td>
                               <a
